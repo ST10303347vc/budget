@@ -30,6 +30,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.budgetbuddy_prog7313.HomeScreen
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+
 
 import com.example.budgetbuddy_prog7313.ui.theme.BudgetBuddy_Prog7313Theme
 
@@ -41,7 +46,13 @@ class MainActivity : ComponentActivity() {
 
             BudgetBuddy_Prog7313Theme {
                 val navController = rememberNavController()
-                LoginScreen(navController)
+                NavHost(
+                    navController = navController,
+                    startDestination = "login"
+                ) {
+                    composable("login") { LoginScreen(navController) }
+                    composable("home") { HomeScreen() }
+                }
             }
 
         }
@@ -69,6 +80,7 @@ fun LoginScreen(navController: NavController) {
 @Composable
 fun LoginScreenPreview() {
     BudgetBuddy_Prog7313Theme {
-        LoginScreen(rememberNavController())
+        val navController = rememberNavController()
+        LoginScreen(navController)
     }
 }
