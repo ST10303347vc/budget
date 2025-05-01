@@ -32,18 +32,36 @@ class MainActivity : ComponentActivity() {
         setContent {
             BudgetBuddy_Prog7313Theme {
                 val navController = rememberNavController()
-                Scaffold(
-                    bottomBar = { BottomNavBar(navController) }
-                ) { innerPadding ->
-                    NavHost(
-                        navController = navController,
-                        startDestination = "login",
-                        modifier = Modifier.padding(innerPadding)
-                    ) {
-                        composable("login") { LoginScreen(navController) }
-                        composable("home") { HomeScreen() }
-                        composable("expenses") { ExpensesScreen() }
-                        composable("budget") { BudgetScreen() }
+                NavHost(
+                    navController = navController,
+                    startDestination = "login"
+                ) {
+                    // Login screen (no nav bar)
+                    composable("login") {
+                        LoginScreen {
+                            navController.navigate("main") {
+                                // Clear the back stack completely
+                                popUpTo("login") { inclusive = true }
+                            }
+                        }
+                    }
+
+                    // Main app with bottom bar
+                    composable("main") {
+                        val mainNavController = rememberNavController()
+                        Scaffold(
+                            bottomBar = { BottomNavBar(mainNavController) }
+                        ) { innerPadding ->
+                            NavHost(
+                                navController = mainNavController,
+                                startDestination = "home",
+                                modifier = Modifier.padding(innerPadding)
+                            ) {
+                                composable("home") { HomeScreen() }
+                                composable("expenses") { ExpScreen() }
+                                composable("budget") { BudgetScreen() }
+                            }
+                        }
                     }
                 }
             }
@@ -51,42 +69,22 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
-// Screens
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(onLoginSuccess: () -> Unit) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        verticalArrangement = Arrangement.Center
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Button(
-            onClick = { navController.navigate("home") },
-            modifier = Modifier.fillMaxWidth()
+            onClick = onLoginSuccess
         ) {
             Text("LOGIN")
         }
     }
 }
 
-
-
-@Composable
-fun ExpensesScreen() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Expenses Screen")
-    }
-}
-
-@Composable
-fun BudgetScreen() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Budget Screen")
-    }
-}
-
-// Navigation Bar
+// Update BottomNavBar to use the correct navController
 @Composable
 fun BottomNavBar(navController: NavController) {
     NavigationBar {
@@ -102,6 +100,7 @@ fun BottomNavBar(navController: NavController) {
                 selected = currentRoute == screen.route,
                 onClick = {
                     navController.navigate(screen.route) {
+                        // Only pop up to start of main navigation
                         popUpTo(navController.graph.startDestinationId)
                         launchSingleTop = true
                     }
@@ -111,14 +110,29 @@ fun BottomNavBar(navController: NavController) {
     }
 }
 
-// Helper function
+
+
+
+
+
+
+@Composable
+fun BudgetScreen() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("Budget Screen")
+    }
+}
+
+
+
+
 @Composable
 fun currentRoute(navController: NavController): String? {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     return navBackStackEntry?.destination?.route
 }
 
-// Screen definitions
+// SThe following are the objects ive created for my screens
 sealed class Screen(
     val route: String,
     val title: String,
@@ -129,11 +143,12 @@ sealed class Screen(
     object Budget : Screen("budget", "Budget", Icons.Default.AccountBalanceWallet)
 }
 
-// Preview
+
+
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
     BudgetBuddy_Prog7313Theme {
-        LoginScreen(rememberNavController())
+        LoginScreen(onLoginSuccess = {})
     }
 }

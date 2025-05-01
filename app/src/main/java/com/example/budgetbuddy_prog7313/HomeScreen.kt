@@ -11,7 +11,7 @@ import androidx.compose.ui.tooling.preview.Preview
 @Composable
 fun HomeScreen() {
     Column(modifier = Modifier.fillMaxSize()) {
-        Text("Welcome to Budget Buddy!")  // Temporary content
+        Text("Welcome to Budget Buddy!")
     }
 }
 
