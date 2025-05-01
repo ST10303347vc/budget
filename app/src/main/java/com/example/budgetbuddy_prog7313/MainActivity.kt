@@ -21,9 +21,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.*
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.budgetbuddy_prog7313.ui.theme.BudgetBuddy_Prog7313Theme
+import com.example.budgetbuddy_prog7313.data.AppDatabase
+import com.example.budgetbuddy_prog7313.data.User
+import com.example.budgetbuddy_prog7313.data.UserDao
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,7 +54,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    // Main app with bottom bar
+
                     composable("main") {
                         val mainNavController = rememberNavController()
                         Scaffold(
@@ -71,20 +79,57 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun LoginScreen(onLoginSuccess: () -> Unit) {
+    val context = LocalContext.current
+    val db = remember { AppDatabase.getDatabase(context) }
+    val userDao = db.userDao()
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) {
+        CoroutineScope(Dispatchers.IO).launch {
+            db.userDao().insertUser(User("1", "1"))
+        }
+    }
+
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text("Username") })
+        Spacer(modifier = Modifier.height(10.dp))
+        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Password") })
+        Spacer(modifier = Modifier.height(20.dp))
         Button(
-            onClick = onLoginSuccess
+            onClick = {
+                // Use coroutine to check login
+                CoroutineScope(Dispatchers.IO).launch {
+                    val user = userDao.validateUser(username, password)
+                    if (user != null) {
+                        withContext(Dispatchers.Main) {
+                            onLoginSuccess()
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            error = "Invalid credentials"
+                        }
+                    }
+                }
+            }
         ) {
             Text("LOGIN")
+        }
+        error?.let {
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(it, color = MaterialTheme.colorScheme.error)
         }
     }
 }
 
-// Update BottomNavBar to use the correct navController
+
+
 @Composable
 fun BottomNavBar(navController: NavController) {
     NavigationBar {
@@ -132,7 +177,7 @@ fun currentRoute(navController: NavController): String? {
     return navBackStackEntry?.destination?.route
 }
 
-// SThe following are the objects ive created for my screens
+// The following are the objects ive created for my screens
 sealed class Screen(
     val route: String,
     val title: String,
