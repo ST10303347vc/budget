@@ -23,4 +23,12 @@ interface ExpenseDao {
 
     @Query("SELECT * FROM ExpenseEntity ORDER BY date DESC")
     fun getAll(): Flow<List<ExpenseEntity>>
+
+    @Query("""
+    SELECT SUM(amount) FROM ExpenseEntity 
+    WHERE date BETWEEN :startDate AND :endDate
+""")
+    fun getTotalSpentForMonth(startDate: String, endDate: String): Flow<Float?>
+
 }
+

@@ -26,12 +26,10 @@ fun BudgetScreen() {
     val expenseDao = db.expenseDao()
     val goalManager = remember { GoalManager(context) }
 
-    var minGoal by remember { mutableStateOf(goalManager.getMinGoal().toString()) }
-    var maxGoal by remember { mutableStateOf(goalManager.getMaxGoal().toString()) }
     var currentSpent by remember { mutableStateOf(0.0) }
 
     val now = LocalDate.now()
-    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val firstOfMonth = now.withDayOfMonth(1).format(formatter)
     val today = now.format(formatter)
 
@@ -43,36 +41,28 @@ fun BudgetScreen() {
         }
     }
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        ThisMonthGoalSection()
 
-        OutlinedTextField(
-            value = minGoal,
-            onValueChange = { minGoal = it },
-            label = { Text("Min Monthly Goal") },
-            modifier = Modifier.fillMaxWidth()
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            "Current spent this month: R${"%.2f".format(currentSpent)}",
+            style = MaterialTheme.typography.titleMedium
         )
-
-        OutlinedTextField(
-            value = maxGoal,
-            onValueChange = { maxGoal = it },
-            label = { Text("Max Monthly Goal") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Button(
-            onClick = {
-                goalManager.setMinGoal(minGoal.toFloatOrNull() ?: 0f)
-                goalManager.setMaxGoal(maxGoal.toFloatOrNull() ?: 0f)
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Save Goals")
-        }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Text("Current spent this month: R${"%.2f".format(currentSpent)}", style = MaterialTheme.typography.titleMedium)
+        MonthGoalListSection("Previous Months", isFuture = false)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        MonthGoalListSection("Future Months", isFuture = true)
+        Spacer(modifier = Modifier.height(16.dp))
+        CustomGoalListSection()
     }
 }
