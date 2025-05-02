@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [User::class, Category::class, ExpenseEntity::class, CustomGoal::class, MonthlyGoal::class],
-    version = 6 // This number is used to update database
+    version = 7 // This number is used to update database
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao

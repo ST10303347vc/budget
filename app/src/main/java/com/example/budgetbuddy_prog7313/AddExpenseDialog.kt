@@ -18,6 +18,12 @@ import com.example.budgetbuddy_prog7313.data.ExpenseEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
+import androidx.core.content.FileProvider
+import androidx.activity.compose.rememberLauncherForActivityResult
+import java.io.File
+import androidx.compose.ui.platform.LocalContext
+
+
 
 @Composable
 fun AddExpenseDialog(onDismiss: () -> Unit) {
@@ -37,8 +43,18 @@ fun AddExpenseDialog(onDismiss: () -> Unit) {
 
     var imageUri by remember { mutableStateOf<Uri?>(null) }
 
-    val categories by categoryDao.getAll().collectAsState(initial = emptyList())
+    val imageFile = remember { File(context.cacheDir, "photo.jpg") }
+    val imageUriForCamera = remember { FileProvider.getUriForFile(context, "${context.packageName}.provider", imageFile) }
 
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            imageUri = imageUriForCamera
+        }
+    }
+    val categories by categoryDao.getAll().collectAsState(initial = emptyList())
+    var showPhotoOptions by remember { mutableStateOf(false)}
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
         imageUri = it
     }
@@ -71,8 +87,11 @@ fun AddExpenseDialog(onDismiss: () -> Unit) {
         },
         title = { Text("Add Expense") },
         text = {
+            var showPhotoOptions by remember { mutableStateOf(false) }
+
             Column {
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") })
+
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
@@ -80,7 +99,9 @@ fun AddExpenseDialog(onDismiss: () -> Unit) {
                 )
 
                 OutlinedTextField(value = amount, onValueChange = { amount = it }, label = { Text("Amount") })
+
                 DropdownMenuBox(categories.map { it.name }, category, onSelected = { category = it })
+
                 Spacer(Modifier.height(8.dp))
 
                 Button(onClick = {
@@ -97,7 +118,6 @@ fun AddExpenseDialog(onDismiss: () -> Unit) {
                 }) {
                     Text(if (date.isBlank()) "Pick Date" else date)
                 }
-
 
                 Button(onClick = {
                     val cal = Calendar.getInstance()
@@ -121,15 +141,40 @@ fun AddExpenseDialog(onDismiss: () -> Unit) {
                     ).show()
                 }) { Text(if (endTime.isBlank()) "End Time" else endTime) }
 
-                Button(onClick = { imagePicker.launch("image/*") }) {
-                    Text("Pick Photo")
+                Button(onClick = { showPhotoOptions = true }) {
+                    Text("Attach Photo")
                 }
 
                 imageUri?.let {
                     Spacer(modifier = Modifier.height(10.dp))
                     Text("Photo attached.")
                 }
+
+                if (showPhotoOptions) {
+                    AlertDialog(
+                        onDismissRequest = { showPhotoOptions = false },
+                        confirmButton = {},
+                        title = { Text("Add Photo") },
+                        text = {
+                            Column {
+                                TextButton(onClick = {
+                                    showPhotoOptions = false
+                                    cameraLauncher.launch(imageUriForCamera)
+                                }) { Text("Take Photo") }
+
+                                TextButton(onClick = {
+                                    showPhotoOptions = false
+                                    imagePicker.launch("image/*")
+                                }) { Text("Choose from Gallery") }
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showPhotoOptions = false }) {
+                                Text("Cancel")
+                            }
+                        }
+                    )
+                }
             }
         }
-    )
-}
+    )}

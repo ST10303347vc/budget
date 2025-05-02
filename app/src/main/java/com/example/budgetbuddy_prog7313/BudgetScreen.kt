@@ -14,7 +14,9 @@ import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
-
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.ui.Alignment
 
 
 
@@ -35,34 +37,98 @@ fun BudgetScreen() {
 
     val scope = rememberCoroutineScope()
 
+    // 🔹 Dialog controls
+    var showGoalTypeDialog by remember { mutableStateOf(false) }
+    var showCustomDialog by remember { mutableStateOf(false) }
+    var showMonthlyDialog by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         expenseDao.getCategoryTotalsBetweenDates(firstOfMonth, today).collectLatest { totals ->
             currentSpent = totals.sumOf { it.total }
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        ThisMonthGoalSection()
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            ThisMonthGoalSection()
 
-        Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-        Text(
-            "Current spent this month: R${"%.2f".format(currentSpent)}",
-            style = MaterialTheme.typography.titleMedium
+            Text(
+                "Current spent this month: R${"%.2f".format(currentSpent)}",
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            MonthGoalListSection("Previous Months", isFuture = false)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            MonthGoalListSection("Future Months", isFuture = true)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            CustomGoalListSection()
+        }
+
+        // 🔹 Floating action button
+        FloatingActionButton(
+            onClick = { showGoalTypeDialog = true },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Add Goal")
+        }
+    }
+
+    // 🔹 Goal Type Selection Dialog
+    if (showGoalTypeDialog) {
+        AlertDialog(
+            onDismissRequest = { showGoalTypeDialog = false },
+            confirmButton = {},
+            title = { Text("Choose Goal Type") },
+            text = {
+                Column {
+                    Button(
+                        onClick = {
+                            showGoalTypeDialog = false
+                            showCustomDialog = true
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Add Custom Goal")
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Button(
+                        onClick = {
+                            showGoalTypeDialog = false
+                            showMonthlyDialog = true
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Add Monthly Goal")
+                    }
+                }
+            }
         )
+    }
 
-        Spacer(modifier = Modifier.height(20.dp))
+    // 🔹 Custom Goal Dialog Placeholder
+    if (showCustomDialog) {
+        AddCustomGoalDialog(onDismiss = { showCustomDialog = false })
+    }
 
-        MonthGoalListSection("Previous Months", isFuture = false)
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        MonthGoalListSection("Future Months", isFuture = true)
-        Spacer(modifier = Modifier.height(16.dp))
-        CustomGoalListSection()
+    // 🔹 Monthly Goal Dialog Placeholder
+    if (showMonthlyDialog) {
+        AddMonthlyGoalDialog(onDismiss = { showMonthlyDialog = false })
     }
 }
+

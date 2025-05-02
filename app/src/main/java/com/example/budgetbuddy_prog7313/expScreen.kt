@@ -28,6 +28,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
 import kotlinx.coroutines.flow.collectLatest
 import java.util.Calendar
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import android.app.DatePickerDialog
 import com.example.budgetbuddy_prog7313.CategoryItem
 import com.example.budgetbuddy_prog7313.data.CategoryTotal
@@ -94,18 +103,12 @@ fun ExpScreen() {
 
 @Composable
 fun ExpenseListScreen() {
-    var showCategoryDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val db = remember { AppDatabase.getDatabase(context) }
     val expenseDao = db.expenseDao()
-    val expenses: List<ExpenseEntity> by expenseDao.getAll().collectAsState(initial = emptyList())
+    val expenses by expenseDao.getAll().collectAsState(initial = emptyList())
 
-    // Trying to fix the filter
-    LaunchedEffect(expenses) {
-        expenses.forEach {
-            println("Expense: ${it.name} | Date: ${it.date}")
-        }
-    }
+    var selectedExpense by remember { mutableStateOf<ExpenseEntity?>(null) }
 
     if (expenses.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -114,47 +117,64 @@ fun ExpenseListScreen() {
     } else {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(expenses) { expense ->
-                ExpenseItem(
-                    name = expense.name,
-                    description = expense.description,
-                    category = expense.category,
-                    amount = expense.amount
-                )
+                ExpenseItem(expense = expense, onClick = { selectedExpense = it })
             }
         }
     }
+
+    selectedExpense?.let {
+        ExpenseDetailDialog(expense = it, onDismiss = { selectedExpense = null })
+    }
 }
+
 
 
 
 
 @Composable
-fun ExpenseItem(name: String, description: String, category: String, amount: Double) {
+fun ExpenseItem(
+    expense: ExpenseEntity,
+    onClick: (ExpenseEntity) -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
+            .clickable { onClick(expense) }
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Text(text = name, style = MaterialTheme.typography.titleMedium)
-                Text(text = description, style = MaterialTheme.typography.bodySmall)
-                Text(text = "Category: $category", style = MaterialTheme.typography.bodySmall)
+            // Image (if available)
+            if (!expense.photoUri.isNullOrBlank()) {
+                AsyncImage(
+                    model = expense.photoUri,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .padding(end = 12.dp)
+                )
             }
+
+            // Expense info
+            Column(modifier = Modifier.weight(1f)) {
+                Text(expense.name, style = MaterialTheme.typography.titleMedium)
+                Text(expense.description, style = MaterialTheme.typography.bodyMedium)
+                Text("Category: ${expense.category}", style = MaterialTheme.typography.bodySmall)
+            }
+
             Text(
-                text = "R${"%.2f".format(amount)}",
-                style = MaterialTheme.typography.titleMedium,
+                text = "R${"%.2f".format(expense.amount)}",
+                style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary
             )
-
         }
     }
 }
+
 
 
 // Data class for expenses

@@ -33,6 +33,8 @@ import com.example.budgetbuddy_prog7313.data.AppDatabase
 import com.example.budgetbuddy_prog7313.data.User
 import com.example.budgetbuddy_prog7313.data.UserDao
 
+
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,28 +46,27 @@ class MainActivity : ComponentActivity() {
                     navController = navController,
                     startDestination = "login"
                 ) {
-                    // Login screen (no nav bar)
+                    // Login screen
                     composable("login") {
-                        LoginScreen {
-                            navController.navigate("main") {
-                                // Clear the back stack completely
+                        LoginScreen { username ->
+                            navController.navigate("main/$username") {
                                 popUpTo("login") { inclusive = true }
                             }
                         }
                     }
 
-
-                    composable("main") {
+                    // Main shell with username passed
+                    composable("main/{username}") { backStackEntry ->
+                        val username = backStackEntry.arguments?.getString("username") ?: ""
                         val mainNavController = rememberNavController()
-                        Scaffold(
-                            bottomBar = { BottomNavBar(mainNavController) }
-                        ) { innerPadding ->
+
+                        Scaffold(bottomBar = { BottomNavBar(mainNavController) }) { innerPadding ->
                             NavHost(
                                 navController = mainNavController,
                                 startDestination = "home",
                                 modifier = Modifier.padding(innerPadding)
                             ) {
-                                composable("home") { HomeScreen() }
+                                composable("home") { HomeScreen(username) }
                                 composable("expenses") { ExpScreen() }
                                 composable("budget") { BudgetScreen() }
                             }
@@ -77,8 +78,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
+
 @Composable
-fun LoginScreen(onLoginSuccess: () -> Unit) {
+fun LoginScreen(onLoginSuccess: (String) -> Unit) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getDatabase(context) }
     val userDao = db.userDao()
@@ -127,7 +130,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
 
                     if (user != null) {
                         withContext(Dispatchers.Main) {
-                            onLoginSuccess()
+                            onLoginSuccess(username)
                         }
                     } else {
                         withContext(Dispatchers.Main) {

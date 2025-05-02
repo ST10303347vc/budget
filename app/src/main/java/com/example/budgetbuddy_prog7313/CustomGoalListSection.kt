@@ -31,6 +31,8 @@ fun CustomGoalListSection() {
 
     LaunchedEffect(Unit) {
         dao.getActiveGoals().collect { activeGoals = it }
+    }
+    LaunchedEffect(Unit) {
         dao.getCompletedGoals().collect { completedGoals = it }
     }
 

@@ -12,7 +12,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.budgetbuddy_prog7313.LevelManager
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(username: String) {
     val context = LocalContext.current
     val levelManager = remember { LevelManager(context) }
 
@@ -24,7 +24,14 @@ fun HomeScreen() {
             .fillMaxSize()
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    )
+
+    {
+        Text(
+            text = "Welcome, $username",
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
         // Avatar
         Surface(
             shape = CircleShape,
