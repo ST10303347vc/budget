@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -32,11 +33,28 @@ import com.example.budgetbuddy_prog7313.ui.theme.BudgetBuddy_Prog7313Theme
 import com.example.budgetbuddy_prog7313.data.AppDatabase
 import com.example.budgetbuddy_prog7313.data.User
 import com.example.budgetbuddy_prog7313.data.UserDao
+import androidx.core.splashscreen.SplashScreen
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
 
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        installSplashScreen().apply {
+            setKeepOnScreenCondition {
+                false
+            }
+        }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
@@ -106,31 +124,63 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
             .padding(20.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    )
+
+    {
+        Image(
+            painter = painterResource(id = R.drawable.square),
+            contentDescription = "App logo",
+            modifier = Modifier
+                .size(120.dp)
+                .padding(bottom = 16.dp)
+        )
         OutlinedTextField(
             value = username,
             onValueChange = { username = it },
-            label = { Text("Username") }
+            shape = RoundedCornerShape(12.dp), //Makes my button shape rounder
+            label = { Text("Username") },
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = Color.Gray,
+                focusedBorderColor = Color.Black,
+
+
+            ), modifier = Modifier
+                .width(280.dp)
+                .padding(vertical = 8.dp)
+
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(10.dp),
+
+
+        )
 
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Password") }
+            shape = RoundedCornerShape(12.dp),
+            label = { Text("Password") },
+
+            modifier = Modifier
+                .width(280.dp)
+                .padding(vertical = 8.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedBorderColor = Color.Gray,
+                focusedBorderColor = Color.Black)
+
         )
 
         Spacer(modifier = Modifier.height(20.dp))
+
 
         Button(
             onClick = {
                 scope.launch {
                     val user = userDao.login(username, password)
 
-                    if (user != null) {
+                    if (user != null) { //
                         withContext(Dispatchers.Main) {
-                            onLoginSuccess(username)
+                            onLoginSuccess(username) //Login Success of the form meaning its correct takes username atrubute stores and uses for greating
                         }
                     } else {
                         withContext(Dispatchers.Main) {
@@ -138,8 +188,20 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
                         }
                     }
                 }
-            }
-        ) {
+            },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Black,
+                contentColor = Color.White
+            ),
+            modifier = Modifier
+                .width(280.dp)
+                .padding(vertical = 16.dp),
+            shape = RoundedCornerShape(8.dp)
+        )
+
+
+
+        {
             Text("LOGIN")
         }
 

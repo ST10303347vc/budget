@@ -64,4 +64,7 @@ dependencies {
     kapt("androidx.room:room-compiler:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("androidx.compose.material3:material3:1.2.0")
+
 }

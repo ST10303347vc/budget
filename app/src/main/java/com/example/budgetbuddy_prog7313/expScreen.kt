@@ -230,41 +230,47 @@ data class Expense(
 fun CategoryListScreen() {
     val context = LocalContext.current
     val db = remember { AppDatabase.getDatabase(context) }
+    val categoryDao = db.categoryDao()
     val expenseDao = db.expenseDao()
 
     var showDateDialog by remember { mutableStateOf(false) }
     var fromDate by remember { mutableStateOf("") }
     var toDate by remember { mutableStateOf("") }
-    var categoryTotals by remember { mutableStateOf<List<CategoryTotal>>(emptyList()) }
 
+    val categories by categoryDao.getAll().collectAsState(initial = emptyList())
+    var totals by remember { mutableStateOf<Map<String, Double>>(emptyMap()) }
     val scope = rememberCoroutineScope()
 
-    // Load all totals by default
-    LaunchedEffect(Unit) {
-        expenseDao.getAllCategoryTotals().collectLatest {
-            categoryTotals = it
+    fun loadTotals() {
+        scope.launch {
+            val flow = if (fromDate.isNotBlank() && toDate.isNotBlank()) {
+                expenseDao.getCategoryTotalsBetweenDates(fromDate, toDate)
+            } else {
+                expenseDao.getAllCategoryTotals()
+            }
+            flow.collectLatest { result ->
+                totals = result.associate { it.category to it.total }
+            }
         }
+    }
+
+    LaunchedEffect(Unit) {
+        loadTotals()
     }
 
     Column(modifier = Modifier
         .fillMaxSize()
         .padding(16.dp)) {
 
-        Button(
-            onClick = { showDateDialog = true },
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Button(onClick = { showDateDialog = true }, modifier = Modifier.fillMaxWidth()) {
             Text("Filter by Date Range")
         }
+
         Button(
             onClick = {
                 fromDate = ""
                 toDate = ""
-                scope.launch {
-                    expenseDao.getAllCategoryTotals().collectLatest {
-                        categoryTotals = it
-                    }
-                }
+                loadTotals()
             },
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
             modifier = Modifier.fillMaxWidth()
@@ -274,14 +280,15 @@ fun CategoryListScreen() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (categoryTotals.isEmpty()) {
+        if (categories.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No category totals found.")
+                Text("No categories yet.")
             }
         } else {
             LazyColumn {
-                items(categoryTotals) { total ->
-                    CategoryItem(name = total.category, total = total.total)
+                items(categories) { category ->
+                    val total = totals[category.name] ?: 0.0
+                    CategoryItem(name = category.name, total = total)
                 }
             }
         }
@@ -292,12 +299,8 @@ fun CategoryListScreen() {
             onConfirm = { from, to ->
                 fromDate = from
                 toDate = to
-                scope.launch {
-                    expenseDao.getCategoryTotalsBetweenDates(fromDate, toDate).collectLatest {
-                        categoryTotals = it
-                        showDateDialog = false
-                    }
-                }
+                loadTotals()
+                showDateDialog = false
             },
             onDismiss = { showDateDialog = false }
         )
