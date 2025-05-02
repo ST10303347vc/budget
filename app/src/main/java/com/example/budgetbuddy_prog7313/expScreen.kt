@@ -106,26 +106,65 @@ fun ExpenseListScreen() {
     val context = LocalContext.current
     val db = remember { AppDatabase.getDatabase(context) }
     val expenseDao = db.expenseDao()
-    val expenses by expenseDao.getAll().collectAsState(initial = emptyList())
 
+    var fromDate by remember { mutableStateOf<String?>(null) }
+    var toDate by remember { mutableStateOf<String?>(null) }
+    var showDateDialog by remember { mutableStateOf(false) }
     var selectedExpense by remember { mutableStateOf<ExpenseEntity?>(null) }
 
-    if (expenses.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No expenses yet")
-        }
+    val expensesFlow = if (fromDate != null && toDate != null) {
+        expenseDao.getBetweenDates(fromDate!!, toDate!!)
     } else {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(expenses) { expense ->
-                ExpenseItem(expense = expense, onClick = { selectedExpense = it })
-            }
-        }
+        expenseDao.getAllSorted()
     }
 
-    selectedExpense?.let {
-        ExpenseDetailDialog(expense = it, onDismiss = { selectedExpense = null })
+    val expenses by expensesFlow.collectAsState(initial = emptyList())
+
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Button(onClick = { showDateDialog = true }) {
+                Text("Filter")
+            }
+
+            Button(onClick = {
+                fromDate = null
+                toDate = null
+            }) {
+                Text("Reset")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (expenses.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No expenses yet")
+            }
+        } else {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                items(expenses) { expense ->
+                    ExpenseItem(expense = expense, onClick = { selectedExpense = it })
+                }
+            }
+        }
+
+        selectedExpense?.let {
+            ExpenseDetailDialog(expense = it, onDismiss = { selectedExpense = null })
+        }
+
+        if (showDateDialog) {
+            DateRangeDialog(
+                onConfirm = { from, to ->
+                    fromDate = from
+                    toDate = to
+                    showDateDialog = false
+                },
+                onDismiss = { showDateDialog = false }
+            )
+        }
     }
 }
+
 
 
 
