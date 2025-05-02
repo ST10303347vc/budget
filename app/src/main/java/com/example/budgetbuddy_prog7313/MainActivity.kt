@@ -161,15 +161,6 @@ fun BottomNavBar(navController: NavController) {
 
 
 
-@Composable
-fun BudgetScreen() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Budget Screen")
-    }
-}
-
-
-
 
 @Composable
 fun currentRoute(navController: NavController): String? {

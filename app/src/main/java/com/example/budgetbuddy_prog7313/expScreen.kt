@@ -23,8 +23,18 @@ import androidx.compose.material.icons.filled.Fastfood
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
+import kotlinx.coroutines.flow.collectLatest
+import java.util.Calendar
+import android.app.DatePickerDialog
+import com.example.budgetbuddy_prog7313.CategoryItem
+import com.example.budgetbuddy_prog7313.data.CategoryTotal
+import kotlinx.coroutines.launch
+import com.example.budgetbuddy_prog7313.data.ExpenseEntity
+
+import com.example.budgetbuddy_prog7313.data.AppDatabase
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,24 +42,25 @@ import androidx.compose.material3.MaterialTheme
 fun ExpScreen() {
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("My Expenses", "Categories")
+    var showDialog by remember { mutableStateOf(false) }
+    var showCategoryDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
                     if (selectedTab == 0) {
-                        // Add new expense
-                    } else {
-                        // Add new category
+                        showDialog = true
+                    } else if (selectedTab == 1) {
+                        showCategoryDialog = true
                     }
                 }
             ) {
-                Icon(Icons.Default.Add, "Add")
+                Icon(Icons.Default.Add, contentDescription = "Add")
             }
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
-            // Tab Row
             TabRow(selectedTabIndex = selectedTab) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
@@ -60,33 +71,65 @@ fun ExpScreen() {
                 }
             }
 
-            // Tab Content
             when (selectedTab) {
                 0 -> ExpenseListScreen()
                 1 -> CategoryListScreen()
+            }
+
+            if (selectedTab == 0 && showDialog) {
+                AddExpenseDialog(onDismiss = { showDialog = false })
+            }
+
+            if (selectedTab == 1 && showCategoryDialog) {
+                AddCategoryDialog(onDismiss = { showCategoryDialog = false })
             }
         }
     }
 }
 
+
+
+
+
+
 @Composable
 fun ExpenseListScreen() {
-    val expenses = listOf(
-        Expense("Groceries", "Food", 1250.50, Icons.Default.Fastfood),
-        Expense("Uber Ride", "Transport", 180.00, Icons.Default.DirectionsCar),
-        Expense("Movie Tickets", "Entertainment", 450.75, Icons.Default.Movie)
-    )
+    var showCategoryDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val db = remember { AppDatabase.getDatabase(context) }
+    val expenseDao = db.expenseDao()
+    val expenses: List<ExpenseEntity> by expenseDao.getAll().collectAsState(initial = emptyList())
 
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(expenses) { expense ->
-            ExpenseItem(expense)
+    // Trying to fix the filter
+    LaunchedEffect(expenses) {
+        expenses.forEach {
+            println("Expense: ${it.name} | Date: ${it.date}")
+        }
+    }
+
+    if (expenses.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("No expenses yet")
+        }
+    } else {
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            items(expenses) { expense ->
+                ExpenseItem(
+                    name = expense.name,
+                    description = expense.description,
+                    category = expense.category,
+                    amount = expense.amount
+                )
+            }
         }
     }
 }
 
 
+
+
 @Composable
-fun ExpenseItem(expense: Expense) {
+fun ExpenseItem(name: String, description: String, category: String, amount: Double) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -96,44 +139,23 @@ fun ExpenseItem(expense: Expense) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Material Icon
-            Icon(
-                imageVector = expense.icon,
-                contentDescription = expense.category,
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = CircleShape
-                    )
-                    .padding(8.dp),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Category: ${expense.category}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = expense.name,
-                    style = MaterialTheme.typography.titleMedium
-                )
+            Column {
+                Text(text = name, style = MaterialTheme.typography.titleMedium)
+                Text(text = description, style = MaterialTheme.typography.bodySmall)
+                Text(text = "Category: $category", style = MaterialTheme.typography.bodySmall)
             }
-
             Text(
-                text = "R${"%.2f".format(expense.amount)}",
+                text = "R${"%.2f".format(amount)}",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
+
         }
     }
 }
+
 
 // Data class for expenses
 data class Expense(
@@ -143,20 +165,88 @@ data class Expense(
     val icon: ImageVector
 )
 
+
+
 @Composable
 fun CategoryListScreen() {
-    val categories = listOf(
-        "Food" to 1250.50,
-        "Transport" to 780.00,
-        "Entertainment" to 450.75
-    )
+    val context = LocalContext.current
+    val db = remember { AppDatabase.getDatabase(context) }
+    val expenseDao = db.expenseDao()
 
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(categories) { (name, total) ->
-            CategoryItem(name = name, total = total)
+    var showDateDialog by remember { mutableStateOf(false) }
+    var fromDate by remember { mutableStateOf("") }
+    var toDate by remember { mutableStateOf("") }
+    var categoryTotals by remember { mutableStateOf<List<CategoryTotal>>(emptyList()) }
+
+    val scope = rememberCoroutineScope()
+
+    // Load all totals by default
+    LaunchedEffect(Unit) {
+        expenseDao.getAllCategoryTotals().collectLatest {
+            categoryTotals = it
         }
     }
+
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .padding(16.dp)) {
+
+        Button(
+            onClick = { showDateDialog = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Filter by Date Range")
+        }
+        Button(
+            onClick = {
+                fromDate = ""
+                toDate = ""
+                scope.launch {
+                    expenseDao.getAllCategoryTotals().collectLatest {
+                        categoryTotals = it
+                    }
+                }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Reset Filter", color = MaterialTheme.colorScheme.onError)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (categoryTotals.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No category totals found.")
+            }
+        } else {
+            LazyColumn {
+                items(categoryTotals) { total ->
+                    CategoryItem(name = total.category, total = total.total)
+                }
+            }
+        }
+    }
+
+    if (showDateDialog) {
+        DateRangeDialog(
+            onConfirm = { from, to ->
+                fromDate = from
+                toDate = to
+                scope.launch {
+                    expenseDao.getCategoryTotalsBetweenDates(fromDate, toDate).collectLatest {
+                        categoryTotals = it
+                        showDateDialog = false
+                    }
+                }
+            },
+            onDismiss = { showDateDialog = false }
+        )
+    }
 }
+
+
+
 
 @Composable
 fun CategoryItem(name: String, total: Double) {
@@ -169,19 +259,10 @@ fun CategoryItem(name: String, total: Double) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = name,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f)
-            )
-
-            Text(
-                text = String.format("R%.2f", total),
-                style = MaterialTheme.typography.bodyLarge
-            )
+            Text(name, style = MaterialTheme.typography.titleMedium)
+            Text("R${"%.2f".format(total)}", style = MaterialTheme.typography.bodyLarge)
         }
     }
 }
