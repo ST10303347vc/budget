@@ -50,21 +50,23 @@ import androidx.compose.ui.unit.dp
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
 
+        // Displays the splash screen briefly when the app launches
         installSplashScreen().apply {
-            setKeepOnScreenCondition {
-                false
-            }
+            setKeepOnScreenCondition { false }
         }
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContent {
             BudgetBuddy_Prog7313Theme {
                 val navController = rememberNavController()
+
                 NavHost(
                     navController = navController,
                     startDestination = "login"
                 ) {
-                    // Login screen
+                    // Login screen route
                     composable("login") {
                         LoginScreen { username ->
                             navController.navigate("main/$username") {
@@ -73,12 +75,14 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    // Main shell with username passed
+                    // Main screen with username passed in
                     composable("main/{username}") { backStackEntry ->
                         val username = backStackEntry.arguments?.getString("username") ?: ""
                         val mainNavController = rememberNavController()
 
-                        Scaffold(bottomBar = { BottomNavBar(mainNavController) }) { innerPadding ->
+                        Scaffold(
+                            bottomBar = { BottomNavBar(mainNavController) }
+                        ) { innerPadding ->
                             NavHost(
                                 navController = mainNavController,
                                 startDestination = "home",
@@ -98,6 +102,7 @@ class MainActivity : ComponentActivity() {
 
 
 
+
 @Composable
 fun LoginScreen(onLoginSuccess: (String) -> Unit) {
     val context = LocalContext.current
@@ -110,7 +115,7 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
     var error by remember { mutableStateOf<String?>(null) }
     var showCreateDialog by remember { mutableStateOf(false) }
 
-    // This is for my user i can use while i test
+    // This block inserts a default test user if it doesn't already exist
     LaunchedEffect(Unit) {
         val existing = userDao.login("1", "1")
         if (existing == null) {
@@ -124,9 +129,7 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
             .padding(20.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
-    )
-
-    {
+    ) {
         Image(
             painter = painterResource(id = R.drawable.square),
             contentDescription = "App logo",
@@ -134,53 +137,46 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
                 .size(120.dp)
                 .padding(bottom = 16.dp)
         )
+
         OutlinedTextField(
             value = username,
             onValueChange = { username = it },
-            shape = RoundedCornerShape(12.dp), //Makes my button shape rounder
             label = { Text("Username") },
+            shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = Color.Gray,
-                focusedBorderColor = Color.Black,
-
-
-            ), modifier = Modifier
+                focusedBorderColor = Color.Black
+            ),
+            modifier = Modifier
                 .width(280.dp)
                 .padding(vertical = 8.dp)
-
         )
 
-        Spacer(modifier = Modifier.height(10.dp),
-
-
-        )
+        Spacer(modifier = Modifier.height(10.dp))
 
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            shape = RoundedCornerShape(12.dp),
             label = { Text("Password") },
-
-            modifier = Modifier
-                .width(280.dp)
-                .padding(vertical = 8.dp),
+            shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = Color.Gray,
-                focusedBorderColor = Color.Black)
-
+                focusedBorderColor = Color.Black
+            ),
+            modifier = Modifier
+                .width(280.dp)
+                .padding(vertical = 8.dp)
         )
 
         Spacer(modifier = Modifier.height(20.dp))
-
 
         Button(
             onClick = {
                 scope.launch {
                     val user = userDao.login(username, password)
-
-                    if (user != null) { //
+                    if (user != null) {
                         withContext(Dispatchers.Main) {
-                            onLoginSuccess(username) //Login Success of the form meaning its correct takes username atrubute stores and uses for greating
+                            onLoginSuccess(username)
                         }
                     } else {
                         withContext(Dispatchers.Main) {
@@ -197,11 +193,7 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
                 .width(280.dp)
                 .padding(vertical = 16.dp),
             shape = RoundedCornerShape(8.dp)
-        )
-
-
-
-        {
+        ) {
             Text("LOGIN")
         }
 
@@ -227,6 +219,7 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
 
 
 
+
 @Composable
 fun BottomNavBar(navController: NavController) {
     NavigationBar {
@@ -242,7 +235,6 @@ fun BottomNavBar(navController: NavController) {
                 selected = currentRoute == screen.route,
                 onClick = {
                     navController.navigate(screen.route) {
-                        // Only pop up to start of main navigation
                         popUpTo(navController.graph.startDestinationId)
                         launchSingleTop = true
                     }
@@ -259,13 +251,14 @@ fun BottomNavBar(navController: NavController) {
 
 
 
+
 @Composable
 fun currentRoute(navController: NavController): String? {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     return navBackStackEntry?.destination?.route
 }
 
-// The following are the objects ive created for my screens
+// These objects define the structure for the bottom nav bar items
 sealed class Screen(
     val route: String,
     val title: String,
@@ -275,6 +268,7 @@ sealed class Screen(
     object Expenses : Screen("expenses", "Expenses", Icons.Default.Receipt)
     object Budget : Screen("budget", "Budget", Icons.Default.AccountBalanceWallet)
 }
+
 
 
 

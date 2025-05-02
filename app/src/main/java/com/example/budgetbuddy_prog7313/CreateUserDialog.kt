@@ -25,11 +25,13 @@ fun CreateUserDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+
         confirmButton = {
             TextButton(onClick = {
-                if (username.isNotBlank() && password.isNotBlank()) {
+                // I added .trim() so users can't submit spaces by accident
+                if (username.trim().isNotEmpty() && password.trim().isNotEmpty()) {
                     scope.launch {
-                        userDao.insert(User(username = username, password = password))
+                        userDao.insert(User(username = username.trim(), password = password.trim()))
                         onUserCreated()
                     }
                 }
@@ -37,12 +39,15 @@ fun CreateUserDialog(
                 Text("Create")
             }
         },
+
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
         },
+
         title = { Text("Create New User") },
+
         text = {
             Column {
                 OutlinedTextField(
@@ -51,7 +56,9 @@ fun CreateUserDialog(
                     label = { Text("Username") },
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },

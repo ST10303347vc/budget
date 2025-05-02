@@ -13,7 +13,7 @@ import androidx.room.RoomDatabase
         CustomGoal::class,
         MonthlyGoal::class
     ],
-    version = 8 // Increment this if schema changes
+    version = 10 // Increment this if schema changes
 )
 abstract class AppDatabase : RoomDatabase() {
 

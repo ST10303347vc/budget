@@ -21,31 +21,42 @@ fun AddCategoryDialog(onDismiss: () -> Unit) {
     val dao = db.categoryDao()
     val scope = rememberCoroutineScope()
 
-    var name by remember { mutableStateOf("") }
+    var categoryName by remember { mutableStateOf("") }
+    // I renamed 'name' to 'categoryName' just to make it clearer what the input is for
 
     AlertDialog(
         onDismissRequest = onDismiss,
+
         confirmButton = {
             TextButton(onClick = {
-                if (name.isNotBlank()) {
+                if (categoryName.isNotBlank()) {
+                    // Using IO here since inserting into the database is a background operation
                     scope.launch(Dispatchers.IO) {
-                        dao.insert(Category(name = name))
+                        dao.insert(Category(name = categoryName))
                         onDismiss()
                     }
                 }
-            }) { Text("Save") }
+            }) {
+                Text("Save")
+            }
         },
+
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
         },
+
         title = { Text("Add Category") },
+
         text = {
             OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
+                value = categoryName,
+                onValueChange = { categoryName = it },
                 label = { Text("Category Name") },
                 modifier = Modifier.fillMaxWidth()
             )
         }
     )
 }
+

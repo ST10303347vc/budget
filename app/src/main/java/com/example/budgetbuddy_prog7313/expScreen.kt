@@ -239,8 +239,10 @@ fun CategoryListScreen() {
 
     val categories by categoryDao.getAll().collectAsState(initial = emptyList())
     var totals by remember { mutableStateOf<Map<String, Double>>(emptyMap()) }
+
     val scope = rememberCoroutineScope()
 
+    // Loads totals either for a date range or all time
     fun loadTotals() {
         scope.launch {
             val flow = if (fromDate.isNotBlank() && toDate.isNotBlank()) {
@@ -248,6 +250,7 @@ fun CategoryListScreen() {
             } else {
                 expenseDao.getAllCategoryTotals()
             }
+
             flow.collectLatest { result ->
                 totals = result.associate { it.category to it.total }
             }
@@ -258,11 +261,16 @@ fun CategoryListScreen() {
         loadTotals()
     }
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
 
-        Button(onClick = { showDateDialog = true }, modifier = Modifier.fillMaxWidth()) {
+        Button(
+            onClick = { showDateDialog = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Text("Filter by Date Range")
         }
 
@@ -280,8 +288,12 @@ fun CategoryListScreen() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // If there are no categories, show a centered message
         if (categories.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
                 Text("No categories yet.")
             }
         } else {
@@ -294,6 +306,7 @@ fun CategoryListScreen() {
         }
     }
 
+    // Show the date filter dialog when triggered
     if (showDateDialog) {
         DateRangeDialog(
             onConfirm = { from, to ->
@@ -306,6 +319,7 @@ fun CategoryListScreen() {
         )
     }
 }
+
 
 
 
@@ -328,3 +342,4 @@ fun CategoryItem(name: String, total: Double) {
         }
     }
 }
+

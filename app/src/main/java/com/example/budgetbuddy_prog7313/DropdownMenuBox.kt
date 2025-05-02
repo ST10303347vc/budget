@@ -15,13 +15,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 
 
 @Composable
-fun DropdownMenuBox(items: List<String>, selected: String, onSelected: (String) -> Unit) {
+fun DropdownMenuBox(
+    items: List<String>,
+    selected: String,
+    onSelected: (String) -> Unit
+) {
     var expanded by remember { mutableStateOf(false) }
-    var selectedItem by remember { mutableStateOf(selected) }
 
+    // We use the selected value from the caller instead of maintaining internal state
     Box {
         OutlinedTextField(
-            value = selectedItem,
+            value = selected,
             onValueChange = {},
             label = { Text("Category") },
             modifier = Modifier.fillMaxWidth(),
@@ -34,12 +38,11 @@ fun DropdownMenuBox(items: List<String>, selected: String, onSelected: (String) 
         )
 
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            items.forEach {
+            items.forEach { item ->
                 DropdownMenuItem(
-                    text = { Text(it) },
+                    text = { Text(item) },
                     onClick = {
-                        selectedItem = it
-                        onSelected(it)
+                        onSelected(item) // we just pass it back
                         expanded = false
                     }
                 )
@@ -47,6 +50,7 @@ fun DropdownMenuBox(items: List<String>, selected: String, onSelected: (String) 
         }
     }
 }
+
 
 @Composable
 fun <T> GoalDropdownSelector(

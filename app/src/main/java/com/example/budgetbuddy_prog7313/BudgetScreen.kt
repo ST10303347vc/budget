@@ -37,11 +37,12 @@ fun BudgetScreen() {
 
     val scope = rememberCoroutineScope()
 
-    // 🔹 Dialog controls
+    // These control when the dialogs are shown
     var showGoalTypeDialog by remember { mutableStateOf(false) }
     var showCustomDialog by remember { mutableStateOf(false) }
     var showMonthlyDialog by remember { mutableStateOf(false) }
 
+    // This listens for expense updates and calculates total spent this month
     LaunchedEffect(Unit) {
         expenseDao.getCategoryTotalsBetweenDates(firstOfMonth, today).collectLatest { totals ->
             currentSpent = totals.sumOf { it.total }
@@ -59,24 +60,27 @@ fun BudgetScreen() {
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                "Current spent this month: R${"%.2f".format(currentSpent)}",
+                text = "Current spent this month: R${"%.2f".format(currentSpent)}",
                 style = MaterialTheme.typography.titleMedium
             )
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // Lists past monthly goals
             MonthGoalListSection("Previous Months", isFuture = false)
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Lists future monthly goals
             MonthGoalListSection("Future Months", isFuture = true)
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Shows all custom goals with completion buttons
             CustomGoalListSection()
         }
 
-        // 🔹 Floating action button
+        // Floating action button to start adding a goal
         FloatingActionButton(
             onClick = { showGoalTypeDialog = true },
             modifier = Modifier
@@ -87,11 +91,11 @@ fun BudgetScreen() {
         }
     }
 
-    // 🔹 Goal Type Selection Dialog
+    // Dialog for choosing between custom or monthly goal
     if (showGoalTypeDialog) {
         AlertDialog(
             onDismissRequest = { showGoalTypeDialog = false },
-            confirmButton = {},
+            confirmButton = {}, // Not used since we use buttons inside text
             title = { Text("Choose Goal Type") },
             text = {
                 Column {
@@ -121,14 +125,15 @@ fun BudgetScreen() {
         )
     }
 
-    // 🔹 Custom Goal Dialog Placeholder
+    // Launch the custom goal dialog
     if (showCustomDialog) {
         AddCustomGoalDialog(onDismiss = { showCustomDialog = false })
     }
 
-    // 🔹 Monthly Goal Dialog Placeholder
+    // Launch the monthly goal dialog
     if (showMonthlyDialog) {
         AddMonthlyGoalDialog(onDismiss = { showMonthlyDialog = false })
     }
 }
+
 

@@ -21,19 +21,24 @@ fun AddMonthlyGoalDialog(onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
 
     val calendar = Calendar.getInstance()
+
     var selectedMonth by remember { mutableStateOf(calendar.get(Calendar.MONTH)) }
     var selectedYear by remember { mutableStateOf(calendar.get(Calendar.YEAR)) }
-    var min by remember { mutableStateOf("") }
-    var max by remember { mutableStateOf("") }
+
+    var minAmount by remember { mutableStateOf("") }
+    var maxAmount by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
+
         confirmButton = {
             TextButton(onClick = {
                 val monthId = "%04d-%02d".format(selectedYear, selectedMonth + 1)
-                val minVal = min.toFloatOrNull() ?: 0f
-                val maxVal = max.toFloatOrNull() ?: 0f
 
+                val minVal = minAmount.toFloatOrNull() ?: 0f
+                val maxVal = maxAmount.toFloatOrNull() ?: 0f
+
+                // Here I check that the values make sense before saving — max should be greater than or equal to min
                 if (minVal >= 0f && maxVal >= minVal) {
                     scope.launch {
                         dao.insert(
@@ -50,13 +55,18 @@ fun AddMonthlyGoalDialog(onDismiss: () -> Unit) {
                 Text("Save")
             }
         },
+
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
         },
+
         title = { Text("Add Monthly Goal") },
 
         text = {
             Column {
+                // This Row allows users to pick both the month and the year
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -77,6 +87,7 @@ fun AddMonthlyGoalDialog(onDismiss: () -> Unit) {
                         label = "Year",
                         value = "$selectedYear",
                         onValueSelected = { index ->
+                            // I show a 5-year range centered on the current year
                             selectedYear = calendar.get(Calendar.YEAR) - 2 + index
                         },
                         options = List(5) { calendar.get(Calendar.YEAR) - 2 + it }
@@ -86,8 +97,8 @@ fun AddMonthlyGoalDialog(onDismiss: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = min,
-                    onValueChange = { min = it },
+                    value = minAmount,
+                    onValueChange = { minAmount = it },
                     label = { Text("Min Amount") },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -95,8 +106,8 @@ fun AddMonthlyGoalDialog(onDismiss: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = max,
-                    onValueChange = { max = it },
+                    value = maxAmount,
+                    onValueChange = { maxAmount = it },
                     label = { Text("Max Amount") },
                     modifier = Modifier.fillMaxWidth()
                 )

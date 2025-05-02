@@ -24,10 +24,12 @@ fun ThisMonthGoalSection() {
     val dao = db.monthlyGoalDao()
     val scope = rememberCoroutineScope()
 
+    // Format the current month as "YYYY-MM"
     val monthId = remember {
         LocalDate.now().let { "%04d-%02d".format(it.year, it.monthValue) }
     }
 
+    // Display name of the current month (e.g., "May")
     val monthName = remember {
         LocalDate.now().month.getDisplayName(TextStyle.FULL, Locale.getDefault())
     }
@@ -35,6 +37,7 @@ fun ThisMonthGoalSection() {
     var currentGoal by remember { mutableStateOf<MonthlyGoal?>(null) }
     var showDialog by remember { mutableStateOf(false) }
 
+    // Listen for changes to this month's goal in the database
     LaunchedEffect(monthId) {
         dao.getGoalForMonth(monthId).collectLatest {
             currentGoal = it
@@ -42,7 +45,9 @@ fun ThisMonthGoalSection() {
     }
 
     Card(
-        border = if (currentGoal != null) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
+        border = if (currentGoal != null) {
+            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+        } else null,
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
@@ -63,6 +68,7 @@ fun ThisMonthGoalSection() {
         }
     }
 
+    // Show the dialog if the user chooses to set a goal
     if (showDialog) {
         SetMonthlyGoalDialog(
             monthId = monthId,
@@ -76,3 +82,4 @@ fun ThisMonthGoalSection() {
         )
     }
 }
+

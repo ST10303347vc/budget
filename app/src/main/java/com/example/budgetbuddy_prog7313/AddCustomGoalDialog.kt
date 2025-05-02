@@ -17,16 +17,18 @@ fun AddCustomGoalDialog(onDismiss: () -> Unit) {
     val dao = db.customGoalDao()
     val scope = rememberCoroutineScope()
 
-    var name by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
+    var goalName by remember { mutableStateOf("") }
+    var goalDescription by remember { mutableStateOf("") }
+    // I renamed these just to make it more clear what the user is actually typing in
 
     AlertDialog(
         onDismissRequest = onDismiss,
+
         confirmButton = {
             TextButton(onClick = {
-                if (name.isNotBlank() && description.isNotBlank()) {
+                if (goalName.isNotBlank() && goalDescription.isNotBlank()) {
                     scope.launch {
-                        dao.insert(CustomGoal(name = name, description = description))
+                        dao.insert(CustomGoal(name = goalName, description = goalDescription))
                         onDismiss()
                     }
                 }
@@ -34,22 +36,29 @@ fun AddCustomGoalDialog(onDismiss: () -> Unit) {
                 Text("Save")
             }
         },
+
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
         },
+
         title = { Text("Add Custom Goal") },
+
         text = {
             Column {
                 OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
+                    value = goalName,
+                    onValueChange = { goalName = it },
                     label = { Text("Goal Name") },
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
+                    value = goalDescription,
+                    onValueChange = { goalDescription = it },
                     label = { Text("Description") },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -57,3 +66,4 @@ fun AddCustomGoalDialog(onDismiss: () -> Unit) {
         }
     )
 }
+

@@ -24,22 +24,24 @@ fun HomeScreen(username: String) {
             .fillMaxSize()
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
-    )
-
-    {
+    ) {
         Text(
             text = "Welcome, $username",
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(bottom = 16.dp)
         )
-        // Avatar
+
+        // Placeholder avatar display using a colored circle
         Surface(
             shape = CircleShape,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(100.dp)
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Text("🧑", style = MaterialTheme.typography.headlineLarge)
+                Text(
+                    text = "U", // Used an initial instead of an emoji
+                    style = MaterialTheme.typography.headlineLarge
+                )
             }
         }
 
@@ -49,6 +51,7 @@ fun HomeScreen(username: String) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Progress bar reflects how close the user is to leveling up
         LinearProgressIndicator(
             progress = xp,
             modifier = Modifier
@@ -61,4 +64,3 @@ fun HomeScreen(username: String) {
         Text("Progress: ${(xp * 100).toInt()}%", style = MaterialTheme.typography.bodyMedium)
     }
 }
-

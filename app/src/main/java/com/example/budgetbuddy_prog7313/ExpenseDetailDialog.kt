@@ -12,16 +12,26 @@ import kotlinx.coroutines.launch
 import coil.compose.AsyncImage
 import com.example.budgetbuddy_prog7313.data.ExpenseEntity
 @Composable
-fun ExpenseDetailDialog(expense: ExpenseEntity, onDismiss: () -> Unit) {
+fun ExpenseDetailDialog(
+    expense: ExpenseEntity,
+    onDismiss: () -> Unit
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
+
         confirmButton = {},
+
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("✕") }
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
         },
+
         title = { Text(expense.name) },
+
         text = {
             Column {
+                // If a photo was attached to the expense, display it at the top
                 if (!expense.photoUri.isNullOrBlank()) {
                     AsyncImage(
                         model = expense.photoUri,
@@ -32,6 +42,8 @@ fun ExpenseDetailDialog(expense: ExpenseEntity, onDismiss: () -> Unit) {
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
+
+                // Show additional expense info
                 Text("Description: ${expense.description}")
                 Text("Category: ${expense.category}")
                 Text("Amount: R${"%.2f".format(expense.amount)}")

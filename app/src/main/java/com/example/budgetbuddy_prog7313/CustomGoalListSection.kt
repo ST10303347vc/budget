@@ -29,15 +29,15 @@ fun CustomGoalListSection() {
     var showActive by remember { mutableStateOf(true) }
     var showCompleted by remember { mutableStateOf(false) }
 
+    // This block listens for goal changes and updates both lists
     LaunchedEffect(Unit) {
         dao.getActiveGoals().collect { activeGoals = it }
-    }
-    LaunchedEffect(Unit) {
         dao.getCompletedGoals().collect { completedGoals = it }
     }
 
-    // 🔹 Active Goals Section
     Column(modifier = Modifier.fillMaxWidth()) {
+
+        // Header for active goals
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -85,7 +85,7 @@ fun CustomGoalListSection() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 🔹 Completed Goals Section
+        // Header for completed goals
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -120,3 +120,4 @@ fun CustomGoalListSection() {
         }
     }
 }
+
