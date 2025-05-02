@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 
 @Entity
 data class MonthlyGoal(
-    @PrimaryKey val monthId: String, // e.g., "2025-05"
+    @PrimaryKey val monthId: String,
     val minAmount: Float,
     val maxAmount: Float
 )
