@@ -82,12 +82,18 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
     val context = LocalContext.current
     val db = remember { AppDatabase.getDatabase(context) }
     val userDao = db.userDao()
+    val scope = rememberCoroutineScope()
+
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+    var showCreateDialog by remember { mutableStateOf(false) }
+
+    // This is for my user i can use while i test
     LaunchedEffect(Unit) {
-        CoroutineScope(Dispatchers.IO).launch {
-            db.userDao().insertUser(User("1", "1"))
+        val existing = userDao.login("1", "1")
+        if (existing == null) {
+            userDao.insert(User("1", "1"))
         }
     }
 
@@ -98,15 +104,27 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text("Username") })
+        OutlinedTextField(
+            value = username,
+            onValueChange = { username = it },
+            label = { Text("Username") }
+        )
+
         Spacer(modifier = Modifier.height(10.dp))
-        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Password") })
+
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Password") }
+        )
+
         Spacer(modifier = Modifier.height(20.dp))
+
         Button(
             onClick = {
-                // Use coroutine to check login
-                CoroutineScope(Dispatchers.IO).launch {
-                    val user = userDao.validateUser(username, password)
+                scope.launch {
+                    val user = userDao.login(username, password)
+
                     if (user != null) {
                         withContext(Dispatchers.Main) {
                             onLoginSuccess()
@@ -121,12 +139,26 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
         ) {
             Text("LOGIN")
         }
+
+        TextButton(onClick = { showCreateDialog = true }) {
+            Text("Create New Account")
+        }
+
         error?.let {
             Spacer(modifier = Modifier.height(10.dp))
             Text(it, color = MaterialTheme.colorScheme.error)
         }
     }
+
+    if (showCreateDialog) {
+        CreateUserDialog(
+            onDismiss = { showCreateDialog = false },
+            onUserCreated = { showCreateDialog = false }
+        )
+    }
 }
+
+
 
 
 
